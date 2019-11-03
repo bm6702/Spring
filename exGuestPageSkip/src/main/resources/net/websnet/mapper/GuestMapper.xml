@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- 위에 써야 mapper태그 가능 -->	
+<mapper namespace="net.websnet.mapper.GuestMapper">
+
+<select id="guestCount" resultType="int"><!-- id는 메소드 이름 -->
+	select count(*) from guest_tbl
+	</select>
+	
+	<select id="guestList" resultType="net.websnet.domain.GuestVO"><!-- id는 메소드 이름 -->
+	<![CDATA[
+	select X.* from (select rownum as rnum,A.* from (select * from guest_tbl order by regdate desc) A
+		where rownum <=#{endpage}) X where X.rnum >= #{pagestart}
+	]]>
+	</select>
+	
+	<insert id="guestWrite">
+	insert into guest_tbl(idx,name,subject,contents) values(guest_tbl_seq_idx.nextval,#{name},#{subject},#{contents})
+	
+	</insert>
+	
+	<select id="guestView" resultType="net.websnet.domain.GuestVO">
+	select *from guest_tbl where idx=#{idx}
+	</select>
+	
+	<update id="guestReadCnt">
+		update guest_tbl set readcnt=readcnt+1 where idx=#{idx}
+	</update>
+</mapper>
