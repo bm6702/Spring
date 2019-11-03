@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+<mapper namespace="net.websnet.mapper.BoardMapper">
+	<!--  전체 목록 카운트 -->
+	<select id="boardTotalCount" resultType="int">
+		select count(*) from boardreply
+	</select>
+	<!--  조건에 맞는 목록 카운트 -->
+	<select id="boardCountSearch" resultType="int">
+		select count(*) from boardreply where 
+			<choose>
+				<when test="search=='name'">
+					name like '%' || #{key} || '%'
+				</when>
+				<when test="search=='subject'">
+					subject like '%' || #{key} || '%'
+				</when>
+				<when test="search=='contents'">
+					contents like '%' || #{key} || '%'
+				</when>
+			</choose>
+	</select>
+<!--  	
+	<select id="boardList" resultType="net.websnet.domain.BoardVO">
+		select * from boardreply order by parent desc, depth asc
+	</select>
+	
+	<select id="boardListSearch" resultType="net.websnet.domain.BoardVO">
+		select * from boardreply where 
+			<choose>
+				<when test="search=='name'">
+					name like '%' || #{key} || '%'
+				</when>
+				<when test="search=='subject'">
+					subject like '%' || #{key} || '%'
+				</when>
+				<when test="search=='contents'">
+					contents like '%' || #{key} || '%'
+				</when>
+			</choose>
+		order by parent desc, depth asc
+	</select>
+-->
+
+	<!-- 페이지별 목록 (검색 조건 없음) -->
+	<select id="boardList" resultType="net.websnet.domain.BoardVO">
+		<![CDATA[
+			select X.* from (select rownum as rnum, A.* from
+				(select * from boardreply order by parent desc, depth asc) A 
+					where rownum <= #{endpage}) X where X.rnum >= #{pagestart}
+		]]>
+	</select>
+
+	<!-- 페이지별 목록 (검색 조건 없음) -->
+	<select id="boardListSearch" resultType="net.websnet.domain.BoardVO">
+		select X.* from (select rownum as rnum, A.* from
+			(select * from boardreply order by parent desc, depth asc) A 
+			   where 
+			<choose>
+				<when test="search=='name'">
+					name like '%' || #{key} || '%'
+				</when>
+				<when test="search=='subject'">
+					subject like '%' || #{key} || '%'
+				</when>
+				<when test="search=='contents'">
+					contents like '%' || #{key} || '%'
+				</when>
+			</choose>
+			<trim prefix="AND">
+				<![CDATA[
+					rownum <= #{endpage}) X where
+				]]>
+			</trim>
+			<choose>
+				<when test="search=='name'">
+					name like '%' || #{key} || '%'
+				</when>
+				<when test="search=='subject'">
+					subject like '%' || #{key} || '%'
+				</when>
+				<when test="search=='contents'">
+					contents like '%' || #{key} || '%'
+				</when>
+			</choose>
+			<trim prefix="AND">
+				<![CDATA[
+					X.rnum >= #{pagestart}
+				]]>
+			</trim>	
+				 
+	</select>
+	
+	<select id="boardMaxIdx" resultType="int">
+		select boardreply_seq_idx.nextval from dual
+	</select>
+
+	<insert id="boardWrite">
+		insert into boardreply(idx,name,pass,email,subject,contents,
+		        parent,realparent,depth,indent)
+		    values(#{idx},#{name},#{pass},#{email},#{subject},#{contents},
+		        #{parent},#{realparent},#{depth},#{indent})
+	</insert>
+	
+	<select id="boardSelect" resultType="net.websnet.domain.BoardVO">
+		select * from boardreply where idx=#{idx}
+	</select>
+	
+	<update id="boardCount">
+		update boardreply set readcnt = readcnt + 1 where idx = #{idx}
+	</update>
+	<!-- 답변글 글 깊이 업데이트 -->
+	<update id="boardDepth">
+		update boardreply set depth=depth+1 where parent=#{parent}
+		     and depth > #{depth}
+	</update>
+	<!-- 게시글 수정  -->
+	<update id="boardModify">
+		update boardreply set email=#{email}, subject=#{subject},contents=#{contents}
+		     where idx=#{idx} and pass=#{pass}
+	</update>
+	
+	<select id="boardRealparent" resultType="int">
+		select count(*) from boardreply where realparent=#{idx}
+	</select>
+	<!--  글 삭제  -->
+	<delete id="boardDelete">
+		delete from boardreply where idx=#{idx} and pass=#{pass}
+	</delete>
+</mapper>
